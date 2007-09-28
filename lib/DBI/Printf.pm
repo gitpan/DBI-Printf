@@ -3,27 +3,25 @@ use warnings;
 
 use DBI;
 
-package DBI::Printf;
+package main;
 
-our $VERSION = 0.02;
-
-package DBI::db;
-
-sub printf {
+sub DBI::db::printf {
     my ($self, $base, @params) = @_;
     
     $base =~ s/%([dfs\%])/
         $1 eq '%' ? '%' :
             @params
-                ? $self->_printf_quote($1, shift @params)
+                ? DBI::Printf::_printf_quote($self, $1, shift @params)
                     : die "too few parameters\n"
                         /eg;
     die "too many parameters\n" if @params;
     $base;
 }
 
+package DBI::Printf;
+
 sub _printf_quote {
-    my ($self, $type, $param) = @_;
+    my ($dbh, $type, $param) = @_;
     no warnings;
     
     if ($type eq 'd') {
@@ -31,12 +29,14 @@ sub _printf_quote {
     } elsif ($type eq 'f') {
         $param = $param + 0;
     } elsif ($type eq 's') {
-        $param = $self->quote($param);
+        $param = $dbh->quote($param);
     } else {
         die "unknown type: $type\n";
     }
     $param;
 }
+
+our $VERSION = 0.03;
 
 1;
 
